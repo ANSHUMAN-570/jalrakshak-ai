@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { Card, DemoTag, StatusBadge, VerifyBadge } from '../components/ui'
 import { fmtTime, useStoreVersion } from '../hooks'
 import { useLang } from '../i18n'
+import { reportLocation } from '../lib/address'
 import { verification } from '../lib/rules'
 import { store } from '../lib/store'
 
@@ -40,6 +41,10 @@ export default function TrackPage() {
             <VerifyBadge v={verification(found.incident)} />
           </div>
           <p className="mt-2 text-sm">{found.report.description}</p>
+          <p className="mt-1 text-sm text-slate-700" data-testid="track-address">
+            {reportLocation(found.report).primary}
+            <span className="block font-mono text-xs text-slate-500">{reportLocation(found.report).coords}</span>
+          </p>
           <p className="mt-2 text-sm text-slate-600">{t('reportsInIncident')}: {found.linkedReports}</p>
           {verification(found.incident) === 'verified' && <p className="mt-2 text-sm text-emerald-800">{t('verifiedNote')}</p>}
           {verification(found.incident) === 'evidence_incomplete' && <p className="mt-2 text-sm text-orange-800">{t('incompleteNote')}</p>}

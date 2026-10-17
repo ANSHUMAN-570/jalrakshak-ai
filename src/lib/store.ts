@@ -1,7 +1,8 @@
+import { cleanComponents, cleanText, formatComponents, hasAddress, isValidPin } from './address'
 import { clusterCentroid, clusterReports } from './duplicates'
 import { canTransition } from './rules'
 import { seedCases, seedReports } from './seed'
-import type { CaseState, Category, EvidenceKind, Incident, Lang, LocationSource, Report, Status } from './types'
+import type { CaseState, Category, EvidenceKind, Incident, Lang, LocationSource, Report, ReportAddress, Status } from './types'
 
 /**
  * Prototype data layer. Everything lives in browser localStorage so the demo works with
@@ -35,9 +36,20 @@ export interface NewReportInput {
   category: Category
   urgencyHints: string[]
   landmark?: string
+  address?: ReportAddress
   severity: number
   photo?: string
   reporterId: string
+}
+
+/** Re-validates an address before it is saved (the form is not the only trusted path). */
+export function sanitizeAddress(a: ReportAddress | undefined): ReportAddress | undefined {
+  if (!a || (a.source !== 'auto' && a.source !== 'manual')) return undefined
+  const components = cleanComponents(a.components ?? {})
+  if (components.pin && !isValidPin(components.pin)) delete components.pin
+  const formatted = a.source === 'manual' ? formatComponents(components) : cleanText(a.formatted, 300) || formatComponents(components)
+  if (!formatted && !hasAddress(components)) return undefined
+  return { source: a.source, formatted: formatted || undefined, components }
 }
 
 export type Result<T = undefined> = ({ ok: true } & (T extends undefined ? object : { value: T })) | { ok: false; error: string }
@@ -122,7 +134,7 @@ export function createStore(storage: StorageLike = memoryStorage(), clock: () =>
     submitReport(input: NewReportInput): Report {
       const st = load()
       const now = clock()
-      const report: Report = { ...input, id: `r-${now}-${Math.random().toString(36).slice(2, 7)}`, caseId: caseId(now), createdAt: now }
+      const report: Report = { ...input, address: sanitizeAddress(input.address), description: cleanText(input.description, 1000), id: `r-${now}-${Math.random().toString(36).slice(2, 7)}`, caseId: caseId(now), createdAt: now }
       st.reports.push(report)
       const inc = incidents().find((i) => i.reports.some((r) => r.id === report.id))
       if (inc) {

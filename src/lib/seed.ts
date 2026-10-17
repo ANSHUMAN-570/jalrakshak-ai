@@ -26,7 +26,8 @@ export function seedReports(now: number): Report[] {
     // Incident A: two nearby reports about the SAME burst pipe
     mk({ id: 'demo-a1', caseId: 'JR-DEMO-0001', createdAt: now - 6 * H, at: off(0, 0), locationSource: 'gps', accuracyM: 12,
       description: 'सड़क पर पाइप फट गया है, बहुत पानी बह रहा है, बाज़ार के पास', lang: 'hi', category: 'burst_main',
-      urgencyHints: ['road affected', 'high flow'], landmark: 'बाज़ार', severity: 95, photo: placeholderPhoto('Burst pipe (Hindi report)'),
+      urgencyHints: ['road affected', 'high flow'], landmark: 'बाज़ार', severity: 95,
+      address: { source: 'auto', formatted: 'Kartavya Path, Raisina Hill, New Delhi, Delhi, 110004, India', components: { line: 'Kartavya Path', locality: 'Raisina Hill', city: 'New Delhi', state: 'Delhi', pin: '110004' } }, photo: placeholderPhoto('Burst pipe (Hindi report)'),
       reporterId: 'demo-user-1', truthGroup: 'A' }),
     mk({ id: 'demo-a2', caseId: 'JR-DEMO-0002', createdAt: now - 3 * H, at: off(25, 20),
       description: 'Water gushing from a broken pipe near the market, road is flooded', lang: 'en', category: 'burst_main',
@@ -35,7 +36,8 @@ export function seedReports(now: number): Report[] {
     // Incident B: small drip elsewhere, no photo
     mk({ id: 'demo-b1', caseId: 'JR-DEMO-0003', createdAt: now - 30 * H, at: off(-1800, 900),
       description: 'Small leak at the road corner, dripping for days', lang: 'en', category: 'pipe_leak',
-      urgencyHints: ['ongoing for days'], severity: 65, reporterId: 'demo-user-3', truthGroup: 'B' }),
+      urgencyHints: ['ongoing for days'], severity: 65,
+      address: { source: 'manual', formatted: 'Road corner, Sample Colony (demo), Demo City', components: { line: 'Road corner', locality: 'Sample Colony (demo)', city: 'Demo City' } }, reporterId: 'demo-user-3', truthGroup: 'B' }),
     // Hard negative: about 50 m from A but ten days earlier and a different issue; must NOT merge with A
     mk({ id: 'demo-n1', caseId: 'JR-DEMO-0004', createdAt: now - 240 * H, at: off(-40, 30),
       description: 'Water meter valve dripping at the shop entrance', lang: 'en', category: 'meter_valve',
@@ -47,7 +49,8 @@ export function seedReports(now: number): Report[] {
     // Incident E: marked repaired but evidence incomplete (no verifier)
     mk({ id: 'demo-e1', caseId: 'JR-DEMO-0006', createdAt: now - 96 * H, at: off(-900, -1700),
       description: 'Pipe leak near the school gate, water pooling', lang: 'en', category: 'pipe_leak',
-      urgencyHints: ['near school'], landmark: 'the school gate', severity: 65, photo: placeholderPhoto('School gate leak'),
+      urgencyHints: ['near school'], landmark: 'the school gate', severity: 65,
+      address: { source: 'manual', formatted: 'Sample Nagar (demo), Demo City', components: { locality: 'Sample Nagar (demo)', city: 'Demo City' } }, photo: placeholderPhoto('School gate leak'),
       reporterId: 'demo-user-6', truthGroup: 'E' }),
   ]
 }

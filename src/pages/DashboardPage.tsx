@@ -1,12 +1,15 @@
 import { useMemo, useState } from 'react'
-import { IncidentMap } from '../components/Maps'
+import { LazyIncidentMap } from '../components/LazyMaps'
 import { Card, DemoTag, ScorePill, StatusBadge, VerifyBadge } from '../components/ui'
 import { fmtTime, operatorName, resizePhoto, setOperatorName, useStoreVersion } from '../hooks'
+import { incidentLocation, reportLocation } from '../lib/address'
 import { CATEGORY_LABELS } from '../lib/classify'
 import { computePriority } from '../lib/priority'
 import { checklist, isOpen, NEXT_STATUSES, verification } from '../lib/rules'
 import { store } from '../lib/store'
 import type { EvidenceKind, Incident, Status } from '../lib/types'
+
+const BANDS = ['all', 'high', 'medium', 'low'] as const
 
 const CHECK_LABEL = {
   before: 'Before / citizen photo on file',
@@ -19,6 +22,9 @@ export default function DashboardPage() {
   useStoreVersion()
   const [op, setOp] = useState(operatorName())
   const [selected, setSelected] = useState<string | null>(null)
+  const [query, setQuery] = useState('')
+  const [statusFilter, setStatusFilter] = useState<'all' | 'open' | Status>('all')
+  const [bandFilter, setBandFilter] = useState<(typeof BANDS)[number]>('all')
   const now = Date.now()
 
   const ranked = useMemo(
@@ -31,6 +37,34 @@ export default function DashboardPage() {
     [store.getVersion()],
   )
   const current = ranked.find((r) => r.inc.id === selected) ?? null
+
+  const visible = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    return ranked.filter(({ inc, p }) => {
+      if (statusFilter === 'open' ? !isOpen(inc.state.status) : statusFilter !== 'all' && inc.state.status !== statusFilter) return false
+      if (bandFilter !== 'all' && p.band !== bandFilter) return false
+      if (!q) return true
+      const loc = incidentLocation(inc)
+      const hay = [CATEGORY_LABELS[inc.category].en, loc.address ?? '', ...inc.reports.flatMap((r) => [r.caseId, r.description])].join(' ').toLowerCase()
+      return hay.includes(q)
+    })
+  }, [ranked, query, statusFilter, bandFilter])
+
+  // Stable pins array so the memoised map only re-renders when incidents or the filter change.
+  const pins = useMemo(
+    () =>
+      visible.map(({ inc, p }) => ({
+        id: inc.id,
+        lat: inc.centroid.lat,
+        lng: inc.centroid.lng,
+        band: p.band,
+        reports: inc.reports.length,
+        closed: !isOpen(inc.state.status),
+        label: `${CATEGORY_LABELS[inc.category].en} - score ${p.score} - ${inc.reports.length} report(s)`,
+        address: incidentLocation(inc).address ?? `Address unavailable (${incidentLocation(inc).coords})`,
+      })),
+    [visible],
+  )
 
   return (
     <div className="space-y-4">
@@ -55,39 +89,55 @@ export default function DashboardPage() {
 
       <div className="grid gap-4 lg:grid-cols-5">
         <div className="space-y-4 lg:col-span-3">
-          <IncidentMap
-            selected={selected}
-            onSelect={setSelected}
-            pins={ranked.map(({ inc, p }) => ({
-              id: inc.id,
-              lat: inc.centroid.lat,
-              lng: inc.centroid.lng,
-              band: p.band,
-              reports: inc.reports.length,
-              closed: !isOpen(inc.state.status),
-              label: `${CATEGORY_LABELS[inc.category].en} - score ${p.score} - ${inc.reports.length} report(s)`,
-            }))}
-          />
+          <LazyIncidentMap selected={selected} onSelect={setSelected} pins={pins} />
           <p className="text-xs text-slate-500">Marker size = number of grouped reports. Red/amber/green = priority band; grey = resolved.</p>
           <Card title="Ranked investigation queue">
+            <div className="mb-3 flex flex-wrap gap-2">
+              <input
+                type="search"
+                aria-label="Search incidents"
+                className="min-w-0 basis-full rounded border p-2 text-sm sm:flex-1 sm:basis-48"
+                placeholder="Search case ID, address or description"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+              />
+              <select aria-label="Filter by status" className="rounded border p-2 text-sm" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}>
+                <option value="all">All statuses</option>
+                <option value="open">Open only</option>
+                {(Object.keys(NEXT_STATUSES) as Status[]).map((s) => (
+                  <option key={s} value={s}>{s.replace('_', ' ')}</option>
+                ))}
+              </select>
+              <select aria-label="Filter by priority" className="rounded border p-2 text-sm" value={bandFilter} onChange={(e) => setBandFilter(e.target.value as typeof bandFilter)}>
+                {BANDS.map((b) => (
+                  <option key={b} value={b}>{b === 'all' ? 'All priorities' : `${b} priority`}</option>
+                ))}
+              </select>
+            </div>
+            {visible.length === 0 && (
+              <p className="rounded bg-slate-50 p-3 text-sm text-slate-600" data-testid="queue-empty">
+                {ranked.length === 0 ? 'No incidents yet. Reports submitted by citizens will appear here.' : 'No incidents match these filters.'}
+              </p>
+            )}
             <ol className="divide-y">
-              {ranked.map(({ inc, p }, i) => (
+              {visible.map(({ inc, p }, i) => (
                 <li key={inc.id}>
                   <button
                     onClick={() => setSelected(inc.id)}
-                    className={`flex w-full items-center gap-3 p-2 text-left hover:bg-slate-50 ${inc.id === selected ? 'bg-sky-50' : ''}`}
+                    className={`flex w-full flex-wrap items-center gap-x-3 gap-y-1 p-2 text-left hover:bg-slate-50 ${inc.id === selected ? 'bg-sky-50' : ''}`}
                   >
                     <span className="w-5 text-sm text-slate-500">{i + 1}</span>
                     <ScorePill score={p.score} band={p.band} />
-                    <span className="flex-1">
+                    <span className="min-w-[10rem] flex-1">
                       <span className="block text-sm font-medium">{CATEGORY_LABELS[inc.category].en}</span>
+                      <span className="block text-xs text-slate-700" data-testid="queue-address">{incidentLocation(inc).primary}</span>
                       <span className="block text-xs text-slate-500">
                         {inc.reports.length} report(s) from {new Set(inc.reports.map((r) => r.reporterId)).size} reporter(s)
                         {inc.reports[0].demo && ' '}
                         {inc.reports[0].demo && <DemoTag />}
                       </span>
                     </span>
-                    <span className="flex flex-col items-end gap-1">
+                    <span className="ml-14 flex flex-row flex-wrap items-center gap-1 sm:ml-0 sm:flex-col sm:items-end">
                       <StatusBadge status={inc.state.status} />
                       <VerifyBadge v={verification(inc)} />
                     </span>
@@ -141,6 +191,11 @@ function CaseDetail({ inc, operator }: { inc: Incident; operator: string }) {
             </div>
           </div>
         </div>
+        <p className="mt-3 text-sm" data-testid="detail-address">
+          <span className="font-medium">Location: </span>
+          {incidentLocation(inc).primary}
+          <span className="block font-mono text-xs text-slate-500">{incidentLocation(inc).coords}</span>
+        </p>
         <h3 className="mt-4 text-sm font-semibold">Why this priority (P = 0.35S + 0.30E + 0.20R + 0.15C)</h3>
         <table className="mt-1 w-full text-xs">
           <tbody>
@@ -161,10 +216,11 @@ function CaseDetail({ inc, operator }: { inc: Incident; operator: string }) {
         <ul className="space-y-3 text-sm">
           {inc.reports.map((r) => (
             <li key={r.id} className="flex gap-3">
-              {r.photo && <img src={r.photo} alt="" className="h-16 w-24 rounded object-cover" />}
+              {r.photo && <img src={r.photo} alt="" width={96} height={64} loading="lazy" decoding="async" className="h-16 w-24 rounded object-cover" />}
               <div>
                 <p><span className="font-mono text-xs">{r.caseId}</span> <span className="text-xs text-slate-500">{fmtTime(r.createdAt)} - {r.lang.toUpperCase()} - {r.locationSource === 'gps' ? `GPS ±${r.accuracyM ?? '?'} m` : 'map pin'}</span></p>
                 <p>{r.description}</p>
+                <p className="text-xs text-slate-600">{reportLocation(r).primary}{reportLocation(r).source ? ` (${reportLocation(r).source === 'manual' ? 'entered manually' : 'detected automatically'})` : ` - ${reportLocation(r).coords}`}</p>
               </div>
             </li>
           ))}

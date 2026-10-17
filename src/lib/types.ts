@@ -2,6 +2,23 @@ export type Category = 'burst_main' | 'pipe_leak' | 'meter_valve' | 'contaminati
 export type Lang = 'en' | 'hi'
 export type LocationSource = 'gps' | 'map_pin'
 
+export interface AddressComponents {
+  /** House number, street or landmark */
+  line?: string
+  locality?: string
+  city?: string
+  state?: string
+  /** 6-digit Indian PIN code */
+  pin?: string
+}
+
+/** Optional on Report so reports saved before addresses existed keep working. */
+export interface ReportAddress {
+  source: 'auto' | 'manual'
+  formatted?: string
+  components: AddressComponents
+}
+
 export interface Report {
   id: string
   caseId: string
@@ -17,6 +34,7 @@ export interface Report {
   /** Urgency phrases found in the text (shown to the citizen for confirmation) */
   urgencyHints: string[]
   landmark?: string
+  address?: ReportAddress
   /** 0-100, from category + urgency hints */
   severity: number
   photo?: string

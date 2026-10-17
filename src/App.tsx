@@ -8,14 +8,14 @@ import TrackPage from './pages/TrackPage'
 export default function App() {
   const { t, setLang, lang } = useLang()
   const link = ({ isActive }: { isActive: boolean }) =>
-    `rounded px-3 py-1.5 text-sm ${isActive ? 'bg-white text-water-700 font-semibold' : 'text-white hover:bg-water-600'}`
+    `shrink-0 whitespace-nowrap rounded px-3 py-1.5 text-sm ${isActive ? 'bg-white text-water-700 font-semibold' : 'text-white hover:bg-water-600'}`
 
   return (
     <BrowserRouter>
       <header className="bg-water-700">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-2 p-3">
-          <span className="mr-3 text-lg font-bold text-white">{t('appName')}</span>
-          <nav className="flex flex-1 flex-wrap gap-1">
+          <span className="mr-auto text-lg font-bold text-white sm:mr-3">{t('appName')}</span>
+          <nav className="order-last flex w-full gap-1 overflow-x-auto sm:order-none sm:w-auto sm:flex-1" aria-label="Main">
             <NavLink to="/report" className={link}>{t('navReport')}</NavLink>
             <NavLink to="/track" className={link}>{t('navTrack')}</NavLink>
             <NavLink to="/dashboard" className={link}>{t('navDashboard')}</NavLink>
