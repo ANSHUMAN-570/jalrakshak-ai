@@ -1,9 +1,15 @@
 import { useSyncExternalStore } from 'react'
+import { directory } from './lib/officers'
 import { store } from './lib/store'
 
 /** Re-renders when the store changes; returns freshly derived incidents. */
 export function useStoreVersion(): number {
   return useSyncExternalStore(store.subscribe, store.getVersion)
+}
+
+/** Re-renders when the officer directory changes. */
+export function useDirectoryVersion(): number {
+  return useSyncExternalStore(directory.subscribe, directory.getVersion)
 }
 
 export function reporterId(): string {

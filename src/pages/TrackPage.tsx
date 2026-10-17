@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import ResponsibleContact from '../components/ResponsibleContact'
 import { Card, DemoTag, StatusBadge, VerifyBadge } from '../components/ui'
 import { fmtTime, useStoreVersion } from '../hooks'
 import { useLang } from '../i18n'
 import { reportLocation } from '../lib/address'
-import { verification } from '../lib/rules'
 import { store } from '../lib/store'
 
 export default function TrackPage() {
@@ -26,33 +26,34 @@ export default function TrackPage() {
         }}
       >
         <input className="flex-1 rounded border p-2 font-mono" value={id} onChange={(e) => setId(e.target.value)} placeholder={t('caseIdPlaceholder')} />
-        <button className="rounded bg-water-600 px-4 py-2 text-white">{t('find')}</button>
+        <button className="rounded bg-accent px-4 py-2 text-on-accent">{t('find')}</button>
       </form>
 
-      {query && !found && <p className="rounded bg-red-50 p-2 text-sm text-red-800">{t('notFound')}</p>}
+      {query && !found && <p className="rounded bg-danger-bg p-2 text-sm text-danger-fg">{t('notFound')}</p>}
 
       {found && (
         <Card>
           <div className="flex flex-wrap items-center gap-2">
             <span className="font-mono text-lg font-bold">{found.report.caseId}</span>
             {found.report.demo && <DemoTag />}
-            <span className="text-sm text-slate-600">{t('status')}:</span>
+            <span className="text-sm text-muted">{t('status')}:</span>
             <StatusBadge status={found.status} />
-            <VerifyBadge v={verification(found.incident)} />
+            <VerifyBadge v={found.verification} />
           </div>
           <p className="mt-2 text-sm">{found.report.description}</p>
-          <p className="mt-1 text-sm text-slate-700" data-testid="track-address">
+          <p className="mt-1 text-sm text-fg" data-testid="track-address">
             {reportLocation(found.report).primary}
-            <span className="block font-mono text-xs text-slate-500">{reportLocation(found.report).coords}</span>
+            <span className="block font-mono text-xs text-muted">{reportLocation(found.report).coords}</span>
           </p>
-          <p className="mt-2 text-sm text-slate-600">{t('reportsInIncident')}: {found.linkedReports}</p>
-          {verification(found.incident) === 'verified' && <p className="mt-2 text-sm text-emerald-800">{t('verifiedNote')}</p>}
-          {verification(found.incident) === 'evidence_incomplete' && <p className="mt-2 text-sm text-orange-800">{t('incompleteNote')}</p>}
-          <ul className="mt-3 space-y-1 border-l-2 border-slate-200 pl-3 text-sm">
-            {found.incident.state.events.map((e, i) => (
-              <li key={i}><span className="text-slate-500">{fmtTime(e.at)}</span> {e.text}</li>
+          <p className="mt-2 text-sm text-muted">{t('reportsInIncident')}: {found.linkedReports}</p>
+          {found.verification === 'verified' && <p className="mt-2 text-sm text-ok-fg">{t('verifiedNote')}</p>}
+          {found.verification === 'evidence_incomplete' && <p className="mt-2 text-sm text-warn-fg">{t('incompleteNote')}</p>}
+          <ul className="mt-3 space-y-1 border-l-2 border-line pl-3 text-sm">
+            {found.events.map((e, i) => (
+              <li key={i}><span className="text-muted">{fmtTime(e.at)}</span> {e.text}</li>
             ))}
           </ul>
+          <div className="mt-4"><ResponsibleContact match={found.report.match} /></div>
         </Card>
       )}
     </div>

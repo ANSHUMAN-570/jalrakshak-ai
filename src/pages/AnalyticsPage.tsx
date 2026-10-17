@@ -10,10 +10,10 @@ const fmtH = (h: number | null) => (h === null ? 'n/a' : h < 1 ? `${Math.round(h
 
 function Tile({ label, value, hint }: { label: string; value: string | number; hint?: string }) {
   return (
-    <div className="rounded-lg border bg-white p-4 shadow-sm">
-      <div className="text-2xl font-bold text-water-700">{value}</div>
+    <div className="rounded-lg border bg-surface p-4 shadow-sm">
+      <div className="text-2xl font-bold text-accent-text">{value}</div>
       <div className="text-sm font-medium">{label}</div>
-      {hint && <div className="text-xs text-slate-500">{hint}</div>}
+      {hint && <div className="text-xs text-muted">{hint}</div>}
     </div>
   )
 }
@@ -25,7 +25,7 @@ function Bars({ data }: { data: [string, number][] }) {
       {data.map(([k, v]) => (
         <li key={k} className="flex items-center gap-2 text-sm">
           <span className="w-44 shrink-0">{k}</span>
-          <span className="h-3 rounded bg-water-500" style={{ width: `${(v / max) * 60}%`, minWidth: v ? 6 : 0 }} />
+          <span className="h-3 rounded bg-accent" style={{ width: `${(v / max) * 60}%`, minWidth: v ? 6 : 0 }} />
           <span className="tabular-nums">{v}</span>
         </li>
       ))}
@@ -67,13 +67,13 @@ export default function AnalyticsPage() {
         <p className="text-sm">
           On {ev.labelled} labelled sample reports: precision <b>{pct(ev.precision)}</b>, recall <b>{pct(ev.recall)}</b> ({ev.correctPairs} of {ev.truePairs} true duplicate pair(s) found; {ev.predictedPairs} predicted).
         </p>
-        <p className="mt-1 text-xs text-slate-500">
+        <p className="mt-1 text-xs text-muted">
           Rule: within 75 m and 72 h, and similar wording or the same specific issue type. The sample is tiny and hand-made, so this shows the method works on seeded cases only. It is not a field accuracy claim.
         </p>
       </Card>
 
       <Card title="What these numbers do and do not show">
-        <p className="text-sm text-slate-700">
+        <p className="text-sm text-fg">
           These metrics describe report handling in this demo. They do not measure water saved or leakage reduced; that would need real flow measurements and a pilot with a water utility.
         </p>
         <button className="mt-3 rounded border px-3 py-1 text-sm" onClick={() => confirm('Reset all data back to the demo sample?') && store.reset()}>Reset demo data</button>

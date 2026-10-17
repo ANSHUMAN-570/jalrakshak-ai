@@ -52,16 +52,16 @@ export default function AddressSearch({ onSelect }: { onSelect: (hit: SearchHit)
         onChange={(e) => setQ(e.target.value)}
       />
       <div aria-live="polite" className="text-sm">
-        {state.status === 'loading' && <p className="mt-1 text-slate-500">{t('addrSearching')}</p>}
-        {state.status === 'error' && <p className="mt-1 text-red-700">{t('addrSearchError')}</p>}
-        {state.status === 'done' && state.hits.length === 0 && <p className="mt-1 text-slate-500">{t('addrNoResults')}</p>}
+        {state.status === 'loading' && <p className="mt-1 text-muted">{t('addrSearching')}</p>}
+        {state.status === 'error' && <p className="mt-1 text-danger-fg">{t('addrSearchError')}</p>}
+        {state.status === 'done' && state.hits.length === 0 && <p className="mt-1 text-muted">{t('addrNoResults')}</p>}
         {state.hits.length > 0 && (
-          <ul className="mt-1 divide-y rounded border bg-white">
+          <ul className="mt-1 divide-y rounded border bg-surface">
             {state.hits.map((h, i) => (
               <li key={`${h.lat},${h.lng},${i}`}>
                 <button
                   type="button"
-                  className="w-full p-2 text-left hover:bg-sky-50"
+                  className="w-full p-2 text-left hover:bg-info-bg"
                   onClick={() => {
                     setState({ status: 'idle', hits: [] })
                     setQ('')

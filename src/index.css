@@ -2,6 +2,72 @@
 @tailwind components;
 @tailwind utilities;
 
-.leaflet-container {
-  z-index: 0;
+/* Theme tokens (space-separated RGB so Tailwind opacity modifiers work). Light is the default. */
+:root {
+  --c-canvas: 245 250 252;      /* #F5FAFC */
+  --c-surface: 255 255 255;     /* #FFFFFF */
+  --c-elevated: 234 244 248;    /* #EAF4F8 */
+  --c-accent: 0 127 145;        /* #007F91 */
+  --c-accent2: 0 166 181;       /* #00A6B5 */
+  --c-accent-text: 0 120 138;   /* #00788A: accent for TEXT (the spec accent is 4.49:1 on the canvas, 4.23:1 on elevated) */
+  --c-fg: 16 42 58;             /* #102A3A */
+  --c-muted: 83 107 122;        /* #536B7A */
+  --c-ok: 22 134 82;            /* #168652 */
+  --c-ok-bg: 227 246 236;
+  --c-ok-fg: 15 92 58;
+  --c-danger: 179 38 30;
+  --c-danger-bg: 253 236 234;
+  --c-danger-fg: 140 29 24;
+  --c-warn-bg: 255 244 214;
+  --c-warn-fg: 107 74 0;
+  --c-info-bg: 230 244 250;
+  --c-info-fg: 11 74 90;
+  --c-line: 207 224 232;
+  --c-on-accent: 255 255 255;
+  color-scheme: light;
 }
+[data-theme='dark'] {
+  --c-canvas: 7 27 44;          /* #071B2C */
+  --c-surface: 11 39 64;        /* #0B2740 */
+  --c-elevated: 16 54 80;       /* #103650 */
+  --c-accent: 0 194 209;        /* #00C2D1 */
+  --c-accent2: 69 230 224;      /* #45E6E0 */
+  --c-accent-text: 0 194 209;   /* same as accent in dark */
+  --c-fg: 244 251 255;          /* #F4FBFF */
+  --c-muted: 169 192 206;       /* #A9C0CE */
+  --c-ok: 56 184 120;           /* #38B878 */
+  --c-ok-bg: 15 59 42;
+  --c-ok-fg: 142 230 184;
+  --c-danger: 255 107 107;
+  --c-danger-bg: 59 20 23;
+  --c-danger-fg: 255 180 180;
+  --c-warn-bg: 66 50 8;
+  --c-warn-fg: 255 217 122;
+  --c-info-bg: 15 53 80;
+  --c-info-fg: 189 233 244;
+  --c-line: 29 69 96;
+  --c-on-accent: 7 27 44;
+  color-scheme: dark;
+}
+
+@layer base {
+  body { background-color: rgb(var(--c-canvas)); color: rgb(var(--c-fg)); }
+  input, select, textarea {
+    background-color: rgb(var(--c-surface));
+    color: rgb(var(--c-fg));
+  }
+  input::placeholder, textarea::placeholder { color: rgb(var(--c-muted)); opacity: 1; }
+  :focus-visible { outline-color: rgb(var(--c-accent)); }
+}
+
+.leaflet-container { z-index: 0; }
+
+/* Dark map: darken the OSM tiles only (markers, tooltips and controls live in other panes). */
+[data-theme='dark'] .leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) brightness(0.95) contrast(0.9); }
+[data-theme='dark'] .leaflet-container { background: #0b1a26; }
+[data-theme='dark'] .leaflet-bar a,
+[data-theme='dark'] .leaflet-bar a:hover { background-color: rgb(var(--c-surface)); color: rgb(var(--c-fg)); border-color: rgb(var(--c-line)); }
+[data-theme='dark'] .leaflet-control-attribution { background: rgb(7 27 44 / 0.8); color: rgb(var(--c-muted)); }
+[data-theme='dark'] .leaflet-control-attribution a { color: rgb(var(--c-accent2)); }
+[data-theme='dark'] .leaflet-tooltip { background: rgb(var(--c-elevated)); color: rgb(var(--c-fg)); border-color: rgb(var(--c-line)); }
+[data-theme='dark'] .leaflet-tooltip-top:before { border-top-color: rgb(var(--c-elevated)); }

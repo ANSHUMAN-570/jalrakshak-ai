@@ -3,9 +3,23 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>JalRakshak AI — Water Leak Intelligence (Prototype)</title>
+    <title>JalRakshak AI — Every Drop Matters. Every Leak Counts.</title>
+    <meta name="description" content="JalRakshak AI turns water-leak reports into location-aware, prioritized, evidence-backed investigations. A working civic-tech prototype with demo data." />
+    <meta name="theme-color" content="#071B2C" />
+    <script>
+      // Set the theme before first paint (no flash of the wrong theme): saved choice, else the system preference.
+      (function () {
+        try {
+          var t = localStorage.getItem('jalrakshak.theme');
+          if (t !== 'dark' && t !== 'light') t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+          document.documentElement.dataset.theme = t;
+          document.documentElement.style.colorScheme = t;
+        } catch (e) { document.documentElement.dataset.theme = 'light'; }
+      })();
+    </script>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   </head>
-  <body class="bg-slate-50 text-slate-900">
+  <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

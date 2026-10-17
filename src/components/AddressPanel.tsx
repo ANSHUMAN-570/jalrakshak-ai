@@ -32,7 +32,7 @@ export default function AddressPanel({ coords, mode, onMode, auto, onRetry, manu
       role="tab"
       aria-selected={mode === m}
       onClick={() => onMode(m)}
-      className={`rounded px-3 py-1.5 text-sm ${mode === m ? 'bg-water-600 text-white' : 'border text-water-700'}`}
+      className={`rounded px-3 py-1.5 text-sm ${mode === m ? 'bg-accent text-on-accent' : 'border text-accent-text'}`}
     >
       {label}
     </button>
@@ -41,9 +41,9 @@ export default function AddressPanel({ coords, mode, onMode, auto, onRetry, manu
 
   return (
     <div className="space-y-3" data-testid="address-panel">
-      <div className="rounded bg-slate-50 p-2 text-sm" data-testid="selected-point">
+      <div className="rounded bg-canvas p-2 text-sm" data-testid="selected-point">
         <span className="font-medium">{t('selectedPoint')}: </span>
-        {coords ? <span className="font-mono">{coordsText(coords.lat, coords.lng)}</span> : <span className="text-slate-500">{t('locationNone')}</span>}
+        {coords ? <span className="font-mono">{coordsText(coords.lat, coords.lng)}</span> : <span className="text-muted">{t('locationNone')}</span>}
       </div>
 
       <div role="tablist" aria-label={t('addressTitle')} className="flex gap-2">
@@ -53,27 +53,27 @@ export default function AddressPanel({ coords, mode, onMode, auto, onRetry, manu
 
       {mode === 'auto' && (
         <div aria-live="polite" className="text-sm" data-testid="auto-address">
-          {!coords && <p className="text-slate-500">{t('locationNone')}</p>}
+          {!coords && <p className="text-muted">{t('locationNone')}</p>}
           {coords && auto.status === 'loading' && (
-            <p className="flex items-center gap-2 text-slate-600">
-              <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-water-600 border-t-transparent" aria-hidden />
+            <p className="flex items-center gap-2 text-muted">
+              <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-accent border-t-transparent" aria-hidden />
               {t('addrDetecting')}
             </p>
           )}
           {coords && auto.status === 'ok' && (
             <div>
               <p className="font-medium" data-testid="auto-address-text">{addressText(auto.address)}</p>
-              <p className="text-xs text-slate-500">{t('addrSourceAuto')}</p>
-              <button type="button" className="mt-1 text-water-700 underline" onClick={onEditAuto}>{t('addrEdit')}</button>
+              <p className="text-xs text-muted">{t('addrSourceAuto')}</p>
+              <button type="button" className="mt-1 text-accent-text underline" onClick={onEditAuto}>{t('addrEdit')}</button>
             </div>
           )}
           {coords && auto.status === 'none' && (
-            <p className="rounded bg-amber-50 p-2 text-amber-900">
+            <p className="rounded bg-warn-bg p-2 text-warn-fg">
               <strong>{t('addrUnavailable')}.</strong> {t('addrNone')}
             </p>
           )}
           {coords && auto.status === 'error' && (
-            <p className="rounded bg-red-50 p-2 text-red-800" role="alert">
+            <p className="rounded bg-danger-bg p-2 text-danger-fg" role="alert">
               {t('addrError')}{' '}
               <button type="button" className="underline" onClick={onRetry}>{t('addrRetry')}</button>
             </p>
@@ -83,7 +83,7 @@ export default function AddressPanel({ coords, mode, onMode, auto, onRetry, manu
 
       {mode === 'manual' && (
         <div data-testid="manual-address">
-          <p className="mb-2 text-xs text-slate-600">{t('addrManualNote')}</p>
+          <p className="mb-2 text-xs text-muted">{t('addrManualNote')}</p>
           <div className="grid gap-2 sm:grid-cols-2">
             {FIELDS.map((f) => (
               <label key={f.key} className={`block text-sm ${f.wide ? 'sm:col-span-2' : ''}`}>
@@ -100,7 +100,7 @@ export default function AddressPanel({ coords, mode, onMode, auto, onRetry, manu
               </label>
             ))}
           </div>
-          {pinBad && <p className="mt-1 text-sm text-red-700" role="alert">{t('addrPinInvalid')}</p>}
+          {pinBad && <p className="mt-1 text-sm text-danger-fg" role="alert">{t('addrPinInvalid')}</p>}
         </div>
       )}
     </div>

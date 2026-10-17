@@ -8,12 +8,12 @@ const IncidentMapImpl = lazy(() => import('./Maps').then((m) => ({ default: m.In
 
 function Fallback() {
   const { t } = useLang()
-  return <div className="flex h-72 items-center justify-center rounded-lg bg-slate-100 text-sm text-slate-500">{t('mapLoading')}</div>
+  return <div className="flex h-72 items-center justify-center rounded-lg bg-elevated text-sm text-muted">{t('mapLoading')}</div>
 }
 
 function Failed() {
   const { t } = useLang()
-  return <div role="alert" className="flex h-40 items-center justify-center rounded-lg bg-red-50 p-3 text-sm text-red-800">{t('mapFailed')}</div>
+  return <div role="alert" className="flex h-40 items-center justify-center rounded-lg bg-danger-bg p-3 text-sm text-danger-fg">{t('mapFailed')}</div>
 }
 
 class Boundary extends Component<{ children: ReactNode }, { failed: boolean }> {

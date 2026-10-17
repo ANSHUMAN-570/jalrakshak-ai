@@ -3,8 +3,10 @@ import { Link } from 'react-router-dom'
 import AddressPanel, { type AddressMode, type AutoState } from '../components/AddressPanel'
 import AddressSearch from '../components/AddressSearch'
 import { LazyLocationPicker } from '../components/LazyMaps'
+import ResponsibleContact from '../components/ResponsibleContact'
 import { Card } from '../components/ui'
-import { reporterId, resizePhoto } from '../hooks'
+import LiveCapture, { type CapturedPhoto } from '../components/LiveCapture'
+import { reporterId } from '../hooks'
 import { useLang } from '../i18n'
 import { addressText, cleanComponents, coordsText, createLatest, formatComponents, hasAddress, isValidPin, reverseGeocode, type SearchHit } from '../lib/address'
 import { analyzeText, CATEGORY_LABELS, severityFor, type Analysis } from '../lib/classify'
@@ -20,7 +22,7 @@ interface Coords {
 
 export default function ReportPage() {
   const { t, lang } = useLang()
-  const [photo, setPhoto] = useState<string>()
+  const [photo, setPhoto] = useState<CapturedPhoto | null>(null)
   const [loc, setLoc] = useState<Coords | null>(null)
   const [locating, setLocating] = useState(false)
   const [mode, setMode] = useState<AddressMode>('auto')
@@ -92,15 +94,6 @@ export default function ReportPage() {
     )
   }
 
-  const onPhoto = async (f?: File) => {
-    if (!f) return
-    try {
-      setPhoto(await resizePhoto(f))
-    } catch (e) {
-      setError((e as Error).message)
-    }
-  }
-
   const editAuto = () => {
     if (auto.address && !hasAddress(manual)) setManual({ ...auto.address.components })
     setMode('manual')
@@ -118,6 +111,7 @@ export default function ReportPage() {
   const check = () => {
     setError('')
     if (!loc) return setError(t('needLocation'))
+    if (!photo) return setError(t('needPhoto'))
     if (mode === 'manual' && manual.pin && !isValidPin(manual.pin)) return setError(t('addrPinInvalid'))
     if (mode === 'auto' && auto.status === 'loading') return setError(t('stillDetecting'))
     if (text.trim().length < 10) return setError(t('needDescription'))
@@ -142,7 +136,8 @@ export default function ReportPage() {
         landmark: analysis.landmark,
         address: chosenAddress(),
         severity: analysis.severity,
-        photo,
+        photo: photo?.dataUrl,
+        photoMeta: photo ? { source: 'browser_camera_client_claim', capturedAtClient: photo.capturedAtClient, width: photo.width, height: photo.height, bytes: photo.bytes } : undefined,
         reporterId: reporterId(),
       })
       const inc = store.track(report.caseId)
@@ -158,13 +153,14 @@ export default function ReportPage() {
   if (done)
     return (
       <Card title={t('doneTitle')}>
-        <p className="text-sm text-slate-600">{t('yourCase')}</p>
-        <p className="my-2 select-all font-mono text-3xl font-bold text-water-700" data-testid="case-id">{done.report.caseId}</p>
+        <p className="text-sm text-muted">{t('yourCase')}</p>
+        <p className="my-2 select-all font-mono text-3xl font-bold text-accent-text" data-testid="case-id">{done.report.caseId}</p>
         <p className="text-sm">{t('saveId')}</p>
-        <p className="mt-2 text-sm text-slate-700">{addressText(done.report.address) ?? `${t('addrUnavailable')} (${coordsText(done.report.lat, done.report.lng)})`}</p>
-        {done.linked && <p className="mt-3 rounded bg-sky-50 p-2 text-sm text-sky-900">{t('linked')}</p>}
+        <p className="mt-2 text-sm text-fg">{addressText(done.report.address) ?? `${t('addrUnavailable')} (${coordsText(done.report.lat, done.report.lng)})`}</p>
+        {done.linked && <p className="mt-3 rounded bg-info-bg p-2 text-sm text-info-fg">{t('linked')}</p>}
+        <div className="mt-4"><ResponsibleContact match={done.report.match} /></div>
         <div className="mt-4 flex flex-wrap gap-3">
-          <Link className="rounded bg-water-600 px-4 py-2 text-white" to={`/track?id=${done.report.caseId}`}>{t('navTrack')}</Link>
+          <Link className="rounded bg-accent px-4 py-2 text-on-accent" to={`/track?id=${done.report.caseId}`}>{t('navTrack')}</Link>
           <button className="rounded border px-4 py-2" onClick={() => location.reload()}>{t('newReport')}</button>
         </div>
       </Card>
@@ -178,15 +174,15 @@ export default function ReportPage() {
 
       <Card title={t('step2')}>
         <div className="mb-3 flex flex-wrap items-center gap-3">
-          <button type="button" className="rounded border border-water-600 px-3 py-1.5 text-water-700" onClick={useGps} disabled={locating}>
+          <button type="button" className="rounded border border-accent px-3 py-1.5 text-accent-text" onClick={useGps} disabled={locating}>
             {locating ? t('locating') : t('useLocation')}
           </button>
-          <span className="text-xs text-slate-500">{t('locPermNote')}</span>
+          <span className="text-xs text-muted">{t('locPermNote')}</span>
         </div>
         <AddressSearch onSelect={onSearchSelect} />
         <div className="my-3">
           <LazyLocationPicker value={loc} onPick={onMapPick} />
-          <p className="mt-1 text-xs text-slate-500">{t('markerHint')}</p>
+          <p className="mt-1 text-xs text-muted">{t('markerHint')}</p>
         </div>
         <AddressPanel
           coords={loc}
@@ -201,13 +197,7 @@ export default function ReportPage() {
       </Card>
 
       <Card title={t('step1')}>
-        <input type="file" accept="image/*" capture="environment" onChange={(e) => onPhoto(e.target.files?.[0])} />
-        {photo && (
-          <div className="mt-2">
-            <img src={photo} alt="attached" className="h-32 w-auto rounded" decoding="async" />
-            <p className="text-xs text-emerald-700">{t('photoChosen')}</p>
-          </div>
-        )}
+        <LiveCapture value={photo} onChange={setPhoto} />
       </Card>
 
       <Card title={t('step3')}>
@@ -222,7 +212,7 @@ export default function ReportPage() {
             setAnalysis(null)
           }}
         />
-        <button type="button" className="mt-2 rounded bg-water-600 px-4 py-2 text-white" onClick={check}>{t('analyze')}</button>
+        <button type="button" className="mt-2 rounded bg-accent px-4 py-2 text-on-accent" onClick={check}>{t('analyze')}</button>
       </Card>
 
       {analysis && (
@@ -232,14 +222,14 @@ export default function ReportPage() {
               <span className="font-medium">{t('addressTitle')}:</span>{' '}
               {summaryAddress ? (
                 <>
-                  {addressText(summaryAddress)} <span className="text-xs text-slate-500">({summaryAddress.source === 'manual' ? t('addrSourceManual') : t('addrSourceAuto')})</span>
+                  {addressText(summaryAddress)} <span className="text-xs text-muted">({summaryAddress.source === 'manual' ? t('addrSourceManual') : t('addrSourceAuto')})</span>
                 </>
               ) : (
                 <>
-                  <span className="text-slate-600">{t('addrUnavailable')}</span> <span className="text-xs text-slate-500">{t('addrCoordsOnly')}</span>
+                  <span className="text-muted">{t('addrUnavailable')}</span> <span className="text-xs text-muted">{t('addrCoordsOnly')}</span>
                 </>
               )}
-              {loc && <span className="block font-mono text-xs text-slate-500">{coordsText(loc.lat, loc.lng)}</span>}
+              {loc && <span className="block font-mono text-xs text-muted">{coordsText(loc.lat, loc.lng)}</span>}
             </p>
             <label className="block">
               <span className="mr-2 font-medium">{t('category')}</span>
@@ -262,14 +252,14 @@ export default function ReportPage() {
               <input type="checkbox" className="mt-1" checked={consent} onChange={(e) => setConsent(e.target.checked)} />
               <span>{t('consent')}</span>
             </label>
-            <button type="button" className="rounded bg-emerald-600 px-4 py-2 font-medium text-white disabled:opacity-60" onClick={submit} disabled={submitting}>
+            <button type="button" className="rounded bg-ok px-4 py-2 font-medium text-on-accent disabled:opacity-60" onClick={submit} disabled={submitting}>
               {submitting ? t('submitting') : t('submit')}
             </button>
           </div>
         </Card>
       )}
 
-      {error && <p role="alert" className="rounded bg-red-50 p-2 text-sm text-red-800">{error}</p>}
+      {error && <p role="alert" className="rounded bg-danger-bg p-2 text-sm text-danger-fg">{error}</p>}
     </div>
   )
 }

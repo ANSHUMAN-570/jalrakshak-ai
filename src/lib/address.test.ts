@@ -3,6 +3,7 @@ import {
   addressText, ADDRESS_UNAVAILABLE, clearAddressCache, cleanText, createLatest, formatComponents, incidentLocation,
   isValidPin, parseNominatimAddress, parseSearchResults, reportLocation, reverseGeocode, searchAddress,
 } from './address'
+import { TINY_JPEG } from './fixtures'
 import { createStore, sanitizeAddress } from './store'
 
 // Real response shape captured from nominatim.openstreetmap.org for 28.6139, 77.209
@@ -133,7 +134,7 @@ describe('createLatest (stale response guard)', () => {
 })
 
 describe('persistence', () => {
-  const base = { lat: 28.7, lng: 77.3, locationSource: 'map_pin' as const, description: 'Leak near the gate, water everywhere', lang: 'en' as const, category: 'pipe_leak' as const, urgencyHints: [], severity: 60, reporterId: 'u1' }
+  const base = { lat: 28.7, lng: 77.3, locationSource: 'map_pin' as const, description: 'Leak near the gate, water everywhere', lang: 'en' as const, category: 'pipe_leak' as const, urgencyHints: [], severity: 60, reporterId: 'u1', photo: TINY_JPEG }
 
   it('saves lat/lng, source, formatted address and components and returns them via track()', () => {
     const s = createStore(undefined, () => 1_800_000_000_000)

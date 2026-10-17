@@ -19,7 +19,7 @@ function Tiles({ onError }: { onError: () => void }) {
 function TileNotice({ show, text }: { show: boolean; text: string }) {
   if (!show) return null
   return (
-    <p role="status" className="absolute inset-x-2 bottom-8 z-[500] rounded bg-amber-100 p-2 text-xs text-amber-900 shadow">
+    <p role="status" className="absolute inset-x-2 bottom-8 z-[500] rounded bg-warn-bg p-2 text-xs text-warn-fg shadow">
       {text}
     </p>
   )

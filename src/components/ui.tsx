@@ -3,12 +3,12 @@ import type { Verification } from '../lib/rules'
 import type { Status } from '../lib/types'
 
 const STATUS_STYLE: Record<Status, string> = {
-  reported: 'bg-slate-200 text-slate-800',
-  investigating: 'bg-amber-100 text-amber-900',
-  inspected: 'bg-sky-100 text-sky-900',
-  repaired: 'bg-indigo-100 text-indigo-900',
-  closed: 'bg-emerald-100 text-emerald-900',
-  not_confirmed: 'bg-slate-100 text-slate-700',
+  reported: 'bg-elevated text-fg',
+  investigating: 'bg-warn-bg text-warn-fg',
+  inspected: 'bg-info-bg text-info-fg',
+  repaired: 'bg-info-bg text-info-fg',
+  closed: 'bg-ok-bg text-ok-fg',
+  not_confirmed: 'bg-elevated text-fg',
 }
 
 export function StatusBadge({ status }: { status: Status }) {
@@ -16,17 +16,20 @@ export function StatusBadge({ status }: { status: Status }) {
 }
 
 export function VerifyBadge({ v }: { v: Verification }) {
-  if (v === 'verified') return <span className="rounded bg-emerald-600 px-2 py-0.5 text-xs font-medium text-white">verified closure</span>
+  if (v === 'verified') return <span className="rounded bg-ok px-2 py-0.5 text-xs font-medium text-on-accent">verified closure</span>
   if (v === 'evidence_incomplete')
-    return <span className="rounded bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-900">evidence incomplete - not verified</span>
+    return <span className="rounded bg-warn-bg px-2 py-0.5 text-xs font-medium text-warn-fg">evidence incomplete - not verified</span>
   return null
 }
 
 export const BAND_COLOR = { high: '#c62828', medium: '#ef8f00', low: '#2e7d32' } as const
 
+/** Text colour on each band: white on red/green passes AA, but white on amber is only 2.4:1, so amber gets dark text. */
+const BAND_TEXT = { high: '#ffffff', medium: '#071B2C', low: '#ffffff' } as const
+
 export function ScorePill({ score, band }: { score: number; band: 'high' | 'medium' | 'low' }) {
   return (
-    <span className="inline-flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold text-white" style={{ background: BAND_COLOR[band] }} title={`Priority score ${score}/100 (${band})`}>
+    <span className="inline-flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold" style={{ background: BAND_COLOR[band], color: BAND_TEXT[band] }} title={`Priority score ${score}/100 (${band})`}>
       {score}
     </span>
   )
@@ -34,8 +37,8 @@ export function ScorePill({ score, band }: { score: number; band: 'high' | 'medi
 
 export function Card({ title, children, className = '' }: { title?: string; children: ReactNode; className?: string }) {
   return (
-    <section className={`rounded-lg border border-slate-200 bg-white p-4 shadow-sm ${className}`}>
-      {title && <h2 className="mb-3 text-base font-semibold text-slate-800">{title}</h2>}
+    <section className={`rounded-lg border border-line bg-surface p-4 shadow-sm ${className}`}>
+      {title && <h2 className="mb-3 text-base font-semibold text-fg">{title}</h2>}
       {children}
     </section>
   )

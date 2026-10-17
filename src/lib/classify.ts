@@ -7,7 +7,10 @@ import type { Category } from './types'
  */
 const CATEGORY_RULES: { category: Category; base: number; words: string[] }[] = [
   { category: 'burst_main', base: 85, words: ['burst', 'gushing', 'broken pipe', 'main pipe', 'फट', 'फव्वारा', 'टूट'] },
-  { category: 'contamination', base: 70, words: ['dirty', 'muddy', 'smell', 'sewage', 'contaminat', 'गंदा', 'गंदे', 'बदबू', 'कीचड़', 'मटमैला'] },
+  { category: 'sewer', base: 65, words: ['sewer', 'sewage', 'manhole', 'सीवर', 'सीवेज', 'मैनहोल'] },
+  { category: 'drainage', base: 45, words: ['drain', 'waterlogging', 'water logging', 'waterlogged', 'नाली', 'जलभराव', 'नाला'] },
+  { category: 'supply_disruption', base: 50, words: ['no water', 'no supply', 'supply stopped', 'low pressure', 'not coming', 'पानी नहीं', 'सप्लाई बंद', 'सप्लाई नहीं', 'कम प्रेशर'] },
+  { category: 'contamination', base: 70, words: ['dirty', 'muddy', 'smell', 'contaminat', 'गंदा', 'गंदे', 'बदबू', 'कीचड़', 'मटमैला'] },
   { category: 'pipe_leak', base: 60, words: ['leak', 'drip', 'seep', 'लीक', 'रिसाव', 'टपक', 'रिस'] },
   { category: 'meter_valve', base: 45, words: ['meter', 'valve', 'tap ', 'मीटर', 'वाल्व', 'नल'] },
   { category: 'overflow', base: 40, words: ['overflow', 'tank', 'ओवरफ्लो', 'टंकी', 'टंकी'] },
@@ -36,7 +39,10 @@ export const CATEGORY_LABELS: Record<Category, { en: string; hi: string }> = {
   burst_main: { en: 'Burst pipe / main', hi: 'पाइप फटना' },
   pipe_leak: { en: 'Pipe leak', hi: 'पाइप रिसाव' },
   meter_valve: { en: 'Meter / valve leak', hi: 'मीटर / वाल्व रिसाव' },
-  contamination: { en: 'Dirty / contaminated water', hi: 'गंदा पानी' },
+  supply_disruption: { en: 'Water supply disruption', hi: 'पानी की सप्लाई बाधित' },
+  contamination: { en: 'Suspected contaminated water', hi: 'संदिग्ध दूषित पानी' },
+  sewer: { en: 'Sewer leakage / overflow', hi: 'सीवर रिसाव / ओवरफ्लो' },
+  drainage: { en: 'Drainage / waterlogging', hi: 'नाली / जलभराव' },
   overflow: { en: 'Tank overflow', hi: 'टंकी ओवरफ्लो' },
   other: { en: 'Other / unclear', hi: 'अन्य / अस्पष्ट' },
 }

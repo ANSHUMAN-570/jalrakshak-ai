@@ -68,7 +68,7 @@ export function seedCases(now: number): Record<string, CaseState> {
       ],
       evidence: [],
     },
-    'demo-b1': { status: 'reported', events: [ev(now - 30 * H, 'system', 'reported', 'Report JR-DEMO-0003 received (DEMO DATA)')], evidence: [] },
+    'demo-b1': { status: 'reported', assignee: 'Demo operator', assignedBy: { name: 'Demo administrator', role: 'administrator' }, events: [ev(now - 30 * H, 'system', 'reported', 'Report JR-DEMO-0003 received (DEMO DATA)')], evidence: [] },
     'demo-n1': { status: 'reported', events: [ev(now - 240 * H, 'system', 'reported', 'Report JR-DEMO-0004 received (DEMO DATA)')], evidence: [] },
     'demo-d1': {
       status: 'closed',

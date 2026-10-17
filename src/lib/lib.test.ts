@@ -6,14 +6,18 @@ import { haversine } from './geo'
 import { computePriority, confirmationScore } from './priority'
 import { checklist, verification } from './rules'
 import { placeholderPhoto, seedCases, seedReports } from './seed'
+import type { Actor } from './officers'
+import { TINY_JPEG } from './fixtures'
 import { createStore } from './store'
+
+const ADMIN: Actor = { name: 'Admin', role: 'administrator' }
 
 const NOW = 1_800_000_000_000
 const H = 3_600_000
 
 const input = (over: Partial<Parameters<ReturnType<typeof createStore>['submitReport']>[0]> = {}) => ({
   lat: 28.62, lng: 77.22, locationSource: 'map_pin' as const, description: 'Pipe leak near the park gate, water everywhere',
-  lang: 'en' as const, category: 'pipe_leak' as const, urgencyHints: [], severity: 60, reporterId: 'u-new', ...over,
+  lang: 'en' as const, category: 'pipe_leak' as const, urgencyHints: [], severity: 60, reporterId: 'u-new', photo: TINY_JPEG, ...over,
 })
 
 describe('geo', () => {
@@ -106,21 +110,21 @@ describe('store + closure rules', () => {
 
   it('cannot close or mark repaired without evidence', () => {
     const s = fresh()
-    expect(s.setStatus('demo-b1', 'inspected', 'op').ok).toBe(false) // skip step
-    expect(s.setStatus('demo-b1', 'investigating', 'op').ok).toBe(true)
-    expect(s.setStatus('demo-b1', 'inspected', 'op').ok).toBe(false) // needs note
-    s.addEvidence('demo-b1', { kind: 'inspection_note', note: 'Found seepage', actor: 'op' })
-    expect(s.setStatus('demo-b1', 'inspected', 'op').ok).toBe(true)
-    expect(s.setStatus('demo-b1', 'repaired', 'op').ok).toBe(false) // needs after photo
-    s.addEvidence('demo-b1', { kind: 'after', photo: placeholderPhoto('after'), actor: 'op' })
-    expect(s.setStatus('demo-b1', 'repaired', 'op').ok).toBe(true)
+    expect(s.setStatus('demo-b1', 'inspected', ADMIN).ok).toBe(false) // skip step
+    expect(s.setStatus('demo-b1', 'investigating', ADMIN).ok).toBe(true)
+    expect(s.setStatus('demo-b1', 'inspected', ADMIN).ok).toBe(false) // needs note
+    s.addEvidence('demo-b1', { kind: 'inspection_note', note: 'Found seepage' }, ADMIN)
+    expect(s.setStatus('demo-b1', 'inspected', ADMIN).ok).toBe(true)
+    expect(s.setStatus('demo-b1', 'repaired', ADMIN).ok).toBe(false) // needs after photo
+    s.addEvidence('demo-b1', { kind: 'after', photo: placeholderPhoto('after') }, ADMIN)
+    expect(s.setStatus('demo-b1', 'repaired', ADMIN).ok).toBe(true)
     // B has no citizen photo yet and no verifier: closing must fail
-    const res = s.setStatus('demo-b1', 'closed', 'op', 'Supervisor')
+    const res = s.setStatus('demo-b1', 'closed', ADMIN, 'Supervisor')
     expect(res.ok).toBe(false)
     expect(verification(s.find('demo-b1')!)).toBe('evidence_incomplete')
-    s.addEvidence('demo-b1', { kind: 'before', photo: placeholderPhoto('before'), actor: 'op' })
-    expect(s.setStatus('demo-b1', 'closed', 'op', '').ok).toBe(false) // verifier required
-    expect(s.setStatus('demo-b1', 'closed', 'op', 'Supervisor').ok).toBe(true)
+    s.addEvidence('demo-b1', { kind: 'before', photo: placeholderPhoto('before') }, ADMIN)
+    expect(s.setStatus('demo-b1', 'closed', ADMIN, '').ok).toBe(false) // verifier required
+    expect(s.setStatus('demo-b1', 'closed', ADMIN, 'Supervisor').ok).toBe(true)
     expect(verification(s.find('demo-b1')!)).toBe('verified')
   })
 

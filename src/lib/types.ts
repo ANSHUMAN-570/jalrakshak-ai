@@ -1,4 +1,15 @@
-export type Category = 'burst_main' | 'pipe_leak' | 'meter_valve' | 'contamination' | 'overflow' | 'other'
+import type { ResponsibleMatch } from './routing'
+
+export type Category =
+  | 'burst_main'
+  | 'pipe_leak'
+  | 'meter_valve'
+  | 'supply_disruption'
+  | 'contamination'
+  | 'sewer'
+  | 'drainage'
+  | 'overflow'
+  | 'other'
 export type Lang = 'en' | 'hi'
 export type LocationSource = 'gps' | 'map_pin'
 
@@ -35,15 +46,30 @@ export interface Report {
   urgencyHints: string[]
   landmark?: string
   address?: ReportAddress
+  /** How the complaint was routed when it was submitted (department, and an officer only if verified). */
+  match?: ResponsibleMatch
   /** 0-100, from category + urgency hints */
   severity: number
   photo?: string
+  /**
+   * Present only on reports submitted through the live-camera flow. Every field is CLIENT-PROVIDED and unverified:
+   * it does not prove the photo is genuine, recent, or taken at the reported location. Legacy reports have none.
+   */
+  photoMeta?: PhotoMeta
   /** Anonymous per-browser id; used only to count independent reporters */
   reporterId: string
   /** Seed/demo data is always labelled as such in the UI */
   demo?: boolean
   /** Ground-truth group, only present on labelled demo data (for evaluation) */
   truthGroup?: string
+}
+
+export interface PhotoMeta {
+  source: 'browser_camera_client_claim'
+  capturedAtClient: string
+  width: number
+  height: number
+  bytes: number
 }
 
 export type Status = 'reported' | 'investigating' | 'inspected' | 'repaired' | 'closed' | 'not_confirmed'
@@ -68,6 +94,8 @@ export interface Evidence {
 export interface CaseState {
   status: Status
   assignee?: string
+  /** Who made the assignment: an administrator's assignment counts as administrator-confirmed. */
+  assignedBy?: { name: string; role: 'operator' | 'administrator' }
   verifiedBy?: string
   events: CaseEvent[]
   evidence: Evidence[]

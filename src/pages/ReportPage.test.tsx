@@ -15,6 +15,19 @@ vi.mock('../components/LazyMaps', () => ({
   LazyIncidentMap: () => null,
 }))
 
+// The real camera is covered in LiveCapture.test.tsx; here a stub stands in so the form logic can be tested.
+vi.mock('../components/LiveCapture', async () => {
+  const { TINY_JPEG } = await import('../lib/fixtures')
+  return {
+    default: ({ value, onChange }: { value: unknown; onChange: (p: unknown) => void }) => (
+      <div>
+        <button type="button" onClick={() => onChange({ dataUrl: TINY_JPEG, capturedAtClient: '2026-10-17T10:00:00.000Z', width: 1, height: 1, bytes: 160 })}>capture stub</button>
+        {value ? <span data-testid="photo-ok" /> : null}
+      </div>
+    ),
+  }
+})
+
 import { clearAddressCache } from '../lib/address'
 import { store } from '../lib/store'
 import ReportPage from './ReportPage'
@@ -34,6 +47,7 @@ function deferred<T>() {
   return { promise, resolve, reject }
 }
 
+const capture = (user: ReturnType<typeof userEvent.setup>) => user.click(screen.getByText('capture stub'))
 const lastReport = () => store.allReports()[store.allReports().length - 1]
 const setup = () => {
   const user = userEvent.setup()
@@ -46,6 +60,7 @@ const describeProblem = (user: ReturnType<typeof userEvent.setup>) =>
 /** Fill the rest of the form and submit. */
 async function finish(user: ReturnType<typeof userEvent.setup>) {
   await describeProblem(user)
+  await capture(user)
   await user.click(screen.getByRole('button', { name: 'Check my report' }))
   await user.click(screen.getByRole('checkbox'))
   await user.click(screen.getByRole('button', { name: 'Submit report' }))
@@ -196,7 +211,9 @@ describe('manual address', () => {
     await user.click(screen.getByRole('tab', { name: 'Enter Address Manually' }))
     await user.type(screen.getByLabelText(/PIN/), '123')
     await describeProblem(user)
-    await user.click(screen.getByRole('button', { name: 'Check my report' }))
+    await capture(user)
+    await capture(user)
+  await user.click(screen.getByRole('button', { name: 'Check my report' }))
     expect((await screen.findAllByText(/PIN code must be 6 digits/)).length).toBeGreaterThan(0)
     expect(screen.queryByRole('button', { name: 'Submit report' })).toBeNull()
   })
@@ -206,7 +223,9 @@ describe('manual address', () => {
     await user.click(screen.getByRole('tab', { name: 'Enter Address Manually' }))
     await user.type(screen.getByLabelText(/City/), 'Delhi')
     await describeProblem(user)
-    await user.click(screen.getByRole('button', { name: 'Check my report' }))
+    await capture(user)
+    await capture(user)
+  await user.click(screen.getByRole('button', { name: 'Check my report' }))
     expect((await screen.findByRole('alert')).textContent).toContain('select a location')
     expect(screen.queryByRole('button', { name: 'Submit report' })).toBeNull()
   })
@@ -229,7 +248,9 @@ describe('submission', () => {
     const user = setup()
     await user.click(screen.getByText('pick A'))
     await describeProblem(user)
-    await user.click(screen.getByRole('button', { name: 'Check my report' }))
+    await capture(user)
+    await capture(user)
+  await user.click(screen.getByRole('button', { name: 'Check my report' }))
     await user.click(screen.getByRole('checkbox'))
     const before = store.allReports().length
     const btn = screen.getByRole('button', { name: 'Submit report' })
@@ -243,7 +264,9 @@ describe('submission', () => {
     const user = setup()
     await user.click(screen.getByText('pick A'))
     await describeProblem(user)
-    await user.click(screen.getByRole('button', { name: 'Check my report' }))
+    await capture(user)
+    await capture(user)
+  await user.click(screen.getByRole('button', { name: 'Check my report' }))
     await user.click(screen.getByRole('checkbox'))
     const spy = vi.spyOn(store, 'submitReport').mockImplementationOnce(() => {
       throw new Error('quota exceeded')
@@ -254,5 +277,44 @@ describe('submission', () => {
     await user.click(screen.getByRole('button', { name: 'Submit report' }))
     await screen.findByTestId('case-id')
     spy.mockRestore()
+  })
+})
+
+
+describe('mandatory live photo and routing result', () => {
+  it('11. cannot continue without a captured photo, and nothing typed is lost', async () => {
+    fetchMock.mockResolvedValue(resp({ error: 'x' }))
+    const user = setup()
+    await user.click(screen.getByText('pick A'))
+    await describeProblem(user)
+    await user.click(screen.getByRole('button', { name: 'Check my report' }))
+    expect((await screen.findByRole('alert')).textContent).toContain('capture a live photo')
+    expect(screen.queryByRole('button', { name: 'Submit report' })).toBeNull()
+    expect((screen.getByLabelText(/3\. Describe/) as HTMLTextAreaElement).value).toContain('broken pipe')
+    await capture(user)
+    await user.click(screen.getByRole('button', { name: 'Check my report' }))
+    expect(await screen.findByRole('button', { name: 'Submit report' })).toBeTruthy()
+  })
+
+  it('14. the report form has no file input, so a gallery image cannot be chosen', () => {
+    setup()
+    expect(document.querySelector('input[type=file]')).toBeNull()
+  })
+
+  it('1/3/4. the success screen shows the department, the BMC helplines, and the not-registered notice (no officer is named without verified data)', async () => {
+    fetchMock.mockResolvedValue(resp({ error: 'x' }))
+    const user = setup()
+    await user.click(screen.getByText('pick A'))
+    await finish(user)
+    await screen.findByTestId('case-id')
+    const box = screen.getByTestId('responsible-contact')
+    expect(box.getAttribute('data-kind')).toBe('department')
+    expect(screen.getByTestId('match-message').textContent).toBe('Your complaint appears to concern BMC Water Works. We could not verify the currently responsible zone-level officer. Please contact BMC at 155304 or 1800-233-0014.')
+    expect(box.textContent).toContain('does not register it with BMC')
+    expect(box.textContent).toContain('+91-755-2701222')
+    expect(screen.queryByTestId('matched-officer')).toBeNull()
+    expect(box.textContent).not.toContain('9826273768') // unverified directory phone numbers never reach citizens
+    expect(lastReport().match?.kind).toBe('department')
+    expect(lastReport().photoMeta?.source).toBe('browser_camera_client_claim')
   })
 })
